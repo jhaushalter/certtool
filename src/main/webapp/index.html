@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f6f2">
+    <title>Certtool | Haushalter</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page: #f4f6f2;
+            --paper: #fff;
+            --ink: #1d2924;
+            --muted: #748078;
+            --line: #e7ebe6;
+            --green: #236b4c;
+            --green-dark: #194d38;
+            --green-soft: #e8f2eb;
+            --red: #a64e43;
+            --shadow: 0 16px 42px rgba(34, 52, 42, .07);
+        }
+        * { box-sizing: border-box; }
+        body { min-width: 320px; margin: 0; background: var(--page); color: var(--ink); font-family: "Segoe UI", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .topbar { height: 66px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 76px); background: var(--green-dark); color: #f6f8f4; }
+        .brand { display: flex; align-items: center; gap: 11px; font-size: 13px; font-weight: 700; letter-spacing: .08em; }
+        .brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid rgba(255,255,255,.32); border-radius: 8px; color: #d8e9dc; font-family: Georgia, serif; font-size: 17px; }
+        .topbar-note { color: #c1d2c7; font-size: 12px; }
+        main { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 52px 0 64px; }
+        .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+        .eyebrow { margin: 0 0 9px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+        h1 { margin: 0; font-family: Georgia, serif; font-size: clamp(32px, 4vw, 44px); font-weight: 500; line-height: 1.1; }
+        .subtitle { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+        .session-status { display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid #dce9df; border-radius: 999px; background: #f7fbf7; color: var(--green-dark); font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4a9a69; box-shadow: 0 0 0 3px #e2f1e6; }
+        .panel { overflow: hidden; border: 1px solid #e5e9e4; border-radius: 9px; background: var(--paper); box-shadow: var(--shadow); }
+        .panel-heading { padding: 21px 24px 18px; border-bottom: 1px solid var(--line); }
+        .panel-heading h2 { margin: 0; font-size: 15px; font-weight: 700; }
+        .panel-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+        .panel-body { padding: 24px; }
+        .upload-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .7fr); gap: 16px; align-items: end; }
+        .field { display: grid; gap: 7px; color: #526056; font-size: 12px; font-weight: 600; }
+        input[type="file"], input[type="password"] { width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid #dfe5df; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 13px; }
+        input:focus { outline: 0; border-color: #73a385; box-shadow: 0 0 0 3px rgba(35,107,76,.1); }
+        .button { min-height: 40px; padding: 0 16px; border: 1px solid var(--green); border-radius: 6px; background: var(--green); color: #fff; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s, border-color .15s; }
+        .button:hover:not(:disabled) { border-color: var(--green-dark); background: var(--green-dark); }
+        .button:disabled { cursor: not-allowed; opacity: .48; }
+        .button.secondary { border-color: #dfe5df; background: #fff; color: #526056; }
+        .button.secondary:hover:not(:disabled) { border-color: #bdcfc1; background: #f7faf7; color: var(--green-dark); }
+        .upload-actions { display: flex; justify-content: flex-end; margin-top: 17px; }
+        .hint { margin: 16px 0 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
+        .notice { margin-top: 16px; padding: 11px 13px; border: 1px solid #eedbd7; border-radius: 6px; background: #fdf7f5; color: var(--red); font-size: 12px; line-height: 1.5; }
+        .results { margin-top: 22px; }
+        .certificate-info { display: grid; grid-template-columns: 1fr auto; gap: 12px 20px; padding: 17px 20px; border-bottom: 1px solid var(--line); background: #f8faf7; }
+        .info-label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+        .info-value { display: block; overflow-wrap: anywhere; color: #344139; font-size: 12px; line-height: 1.5; }
+        .chain-tools { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+        .chain-state { min-width: 0; }
+        .chain-state strong { display: block; color: var(--green-dark); font-size: 12px; }
+        .chain-state strong.incomplete { color: var(--red); }
+        .chain-state p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+        .chain-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+        .trust-panel { padding: 18px 20px 20px; border-bottom: 1px solid var(--line); }
+        .trust-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+        .trust-heading h3 { margin: 0; font-size: 13px; }
+        .trust-heading span { color: var(--muted); font-size: 11px; }
+        .trust-chain { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+        .trust-card { position: relative; padding: 14px 16px; border: 1px solid #e8ece7; border-radius: 7px; background: #fff; }
+        .trust-card:not(:last-child)::after { position: absolute; top: 100%; left: 24px; width: 2px; height: 11px; background: #c9d9cd; content: ""; }
+        .trust-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .trust-card-heading strong { color: var(--green-dark); font-size: 12px; }
+        .trust-position { display: inline-grid; width: 23px; height: 23px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: var(--green-soft); color: var(--green-dark); font-size: 11px; font-weight: 700; }
+        .trust-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 20px; }
+        .trust-field { min-width: 0; }
+        .trust-field.wide { grid-column: 1 / -1; }
+        .trust-label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+        .trust-value { display: block; overflow-wrap: anywhere; color: #344139; font-size: 11px; line-height: 1.5; }
+        .trust-check { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 999px; background: var(--green-soft); color: var(--green-dark); font-size: 10px; font-weight: 600; }
+        .trust-check.is-pending { background: #f7f1e4; color: #795b1e; }
+        .trust-note { margin: 12px 0 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+        .validation-summary { margin: 0 0 14px; padding: 10px 12px; border-radius: 6px; background: #f7f1e4; color: #795b1e; font-size: 11px; line-height: 1.6; }
+        .validation-summary.is-valid { background: var(--green-soft); color: var(--green-dark); }
+        .validation-summary.is-invalid { background: #fdf0ed; color: var(--red); }
+        .cognos-option { grid-column: 1 / -1; display: grid; gap: 14px; border-color: #dce9df; background: #f8fbf8; }
+        .cognos-option h3 { margin: 0; color: var(--green-dark); font-size: 12px; }
+        .cognos-option p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+        .cognos-controls { display: flex; align-items: flex-end; gap: 12px; }
+        .cognos-password { flex: 1 1 260px; }
+        .cognos-password input { width: 100%; min-height: 40px; padding: 9px 11px; border: 1px solid #dfe5df; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 13px; }
+        .exports { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 20px; }
+        .export-option { display: flex; min-height: 75px; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border: 1px solid #e8ece7; border-radius: 7px; }
+        .export-option h3 { margin: 0; font-size: 12px; }
+        .export-option p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+        .export-option .button { flex: 0 0 auto; }
+        .paw-option { grid-column: 1 / -1; border-color: #dce9df; background: #f8fbf8; }
+        .paw-option h3 { color: var(--green-dark); }
+        .result-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; padding: 18px 20px 0; }
+        .result-heading h2 { margin: 0; font-size: 14px; }
+        .message { min-height: 19px; margin: 0 0 13px; color: var(--muted); font-size: 12px; }
+        .message.error { color: var(--red); }
+        .message.success { color: var(--green); }
+        [hidden] { display: none !important; }
+        a { color: var(--green); }
+        @media (max-width: 680px) {
+            .topbar { height: 58px; padding: 0 20px; }
+            .topbar-note { display: none; }
+            main { width: min(100% - 32px, 540px); padding: 34px 0 44px; }
+            .page-heading { align-items: flex-start; flex-direction: column; gap: 14px; }
+            .panel-body { padding: 18px; }
+            .upload-grid, .exports { grid-template-columns: 1fr; }
+            .paw-option { grid-column: auto; }
+            .certificate-info { grid-template-columns: 1fr; }
+            .chain-tools { align-items: stretch; flex-direction: column; }
+            .chain-actions { justify-content: stretch; }
+            .chain-actions .button { flex: 1 1 180px; }
+            .trust-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+            .trust-fields { grid-template-columns: 1fr; }
+            .trust-field.wide { grid-column: auto; }
+            .cognos-controls { align-items: stretch; flex-direction: column; }
+            .export-option { align-items: flex-start; flex-direction: column; }
+            .export-option .button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">H</span><span>HAUSHALTER</span></div>
+        <span class="topbar-note">Zertifikate sicher verarbeiten</span>
+    </header>
+    <main>
+        <section class="page-heading" aria-labelledby="page-title">
+            <div>
+                <p class="eyebrow">Zertifikatsverwaltung</p>
+                <h1 id="page-title">SSL Certtool</h1>
+                <p class="subtitle">PFX importieren, Schlüssel und Zertifikate exportieren.</p>
+            </div>
+            <div class="session-status" role="status"><span class="status-dot" aria-hidden="true"></span><span id="session-label">Bereit</span></div>
+        </section>
+
+        <section class="panel" aria-labelledby="import-title">
+            <div class="panel-heading">
+                <h2 id="import-title">PFX-Datei importieren</h2>
+                <p>Wählen Sie eine PKCS#12-Datei (.pfx oder .p12) und geben Sie das zugehörige Passwort ein.</p>
+            </div>
+            <div class="panel-body">
+                <p class="message" id="message" role="status" aria-live="polite"></p>
+                <form id="import-form" action="api/import" method="post" enctype="multipart/form-data">
+                    <div class="upload-grid">
+                        <label class="field" for="pfx-file">PFX-Datei
+                            <input id="pfx-file" name="pfx" type="file" accept=".pfx,.p12,application/x-pkcs12" required>
+                        </label>
+                        <label class="field" for="pfx-password">PFX-Passwort
+                            <input id="pfx-password" name="password" type="password" autocomplete="new-password" spellcheck="false">
+                        </label>
+                    </div>
+                    <div class="upload-actions"><button class="button" id="import-button" type="submit">PFX importieren</button></div>
+                </form>
+                <p class="hint">Die Datei wird nur zur Verarbeitung übertragen. Der private Schlüssel bleibt bis zu zehn Minuten nach der letzten Aktivität in der Sitzung und wird nicht in den Exporten mit Zertifikatsattributen ergänzt.</p>
+                <div class="notice">Dieses Tool ist privates Eigentum von Jörg Haushalter, ich stelle es unter Aberkennung jeglicher Haftung für Testzwecke zur Verfügung</div>
+            </div>
+        </section>
+
+        <section class="panel results" aria-labelledby="pem-import-title">
+            <div class="panel-heading">
+                <h2 id="pem-import-title">Bestehende pa-workspace.pem prüfen</h2>
+                <p>Die PEM-Datei wird auf Schlüssel-Zertifikat-Zuordnung, Zertifikatskette und aktuelle Gültigkeit geprüft. Der private Schlüssel wird nach der Prüfung nicht in der Sitzung gespeichert.</p>
+            </div>
+            <div class="panel-body">
+                <form id="pem-import-form" action="api/import-pem" method="post" enctype="multipart/form-data">
+                    <div class="upload-grid">
+                        <label class="field" for="pem-file">PEM-Datei
+                            <input id="pem-file" name="pem" type="file" accept=".pem,application/x-pem-file" required>
+                        </label>
+                        <span class="hint">Unterstützt werden unverschlüsselte PKCS#8-Privatschlüssel (`BEGIN PRIVATE KEY`) und X.509-Zertifikate (`BEGIN CERTIFICATE`).</span>
+                    </div>
+                    <div class="upload-actions"><button class="button secondary" id="pem-import-button" type="submit">PEM prüfen</button></div>
+                </form>
+            </div>
+        </section>
+
+        <section class="panel results" id="results" aria-labelledby="results-title" hidden>
+            <div class="result-heading">
+                <div><h2 id="results-title">Export bereit</h2><p class="hint" id="result-description">Der PAW-Export folgt der IBM-Reihenfolge: privater Schlüssel, Serverzertifikat, Zwischen- und Stammzertifikate.</p></div>
+                <button class="button secondary" id="clear-button" type="button">Sitzung leeren</button>
+            </div>
+            <div class="certificate-info">
+                <div><span class="info-label">Serverzertifikat</span><span class="info-value" id="subject"></span></div>
+                <div><span class="info-label">Gültig bis (UTC)</span><span class="info-value" id="valid-until"></span></div>
+            </div>
+            <div class="chain-tools" id="chain-tools">
+                <div class="chain-state">
+                    <strong id="chain-status">Zertifikatskette wird geprüft</strong>
+                    <p id="chain-hint">Zwischen- und Stammzertifikate können online oder per Datei ergänzt werden.</p>
+                </div>
+                <div class="chain-actions" id="chain-actions">
+                    <button class="button secondary" id="online-chain-button" type="button">Kette online ergänzen</button>
+                    <input id="chain-files" type="file" accept=".cer,.crt,.pem,.der,.p7b,.p7c,application/pkix-cert,application/x-pem-file,application/pkcs7-mime" multiple hidden>
+                    <button class="button secondary" id="manual-chain-button" type="button">Zertifikate importieren</button>
+                </div>
+            </div>
+            <section class="trust-panel" aria-labelledby="trust-title">
+                <div class="trust-heading">
+                    <h3 id="trust-title">Chain of Trust</h3>
+                    <span id="trust-summary"></span>
+                </div>
+                <p class="validation-summary" id="validation-summary" hidden></p>
+                <ol class="trust-chain" id="trust-chain" aria-label="Geordnete Zertifikatskette"></ol>
+                <p class="trust-note">„Signatur geprüft“ bestätigt die Signatur zwischen den angezeigten Zertifikaten. Die Prüfung ersetzt keine vollständige PKIX-Pfadvalidierung und sagt nicht aus, ob das Root-Zertifikat auf Ihrem System oder in Planning Analytics Workspace als vertrauenswürdig hinterlegt ist.</p>
+            </section>
+            <div class="exports" id="exports">
+                <article class="export-option">
+                    <div><h3>Privater Schlüssel</h3><p>PKCS#8 PEM</p></div>
+                    <button class="button secondary download-button" data-type="private-key" type="button">Schlüssel speichern</button>
+                </article>
+                <article class="export-option">
+                    <div><h3>Serverzertifikat</h3><p>PEM (X.509)</p></div>
+                    <button class="button secondary download-button" data-type="server-certificate" type="button">Zertifikat speichern</button>
+                </article>
+                <article class="export-option">
+                    <div><h3>Zertifikatskette</h3><p id="chain-description">Zwischen- und Stammzertifikate</p></div>
+                    <button class="button secondary download-button" data-type="chain" type="button">Kette speichern</button>
+                </article>
+                <article class="export-option paw-option">
+                    <div><h3>IBM Planning Analytics Workspace</h3><p>PEM-Datei ohne Bag Attributes; Download erst bei vollständiger Kette</p></div>
+                    <button class="button download-button" data-type="paw" type="button">pa-workspace.pem speichern</button>
+                </article>
+                <article class="export-option cognos-option">
+                    <div>
+                        <h3>IBM Cognos Analytics – Importpaket vorbereiten</h3>
+                        <p>Erstellt ein ZIP mit verschlüsselter PFX, CA-Zertifikaten im DER-Format und IBM-Befehlsvorlagen. Es wird kein Cognos-Keystore verändert.</p>
+                    </div>
+                    <div class="cognos-controls">
+                        <label class="field cognos-password" for="cognos-pfx-password">Neues Passwort für die erzeugte PFX (mindestens 12 Zeichen)
+                            <input id="cognos-pfx-password" type="password" minlength="12" maxlength="128" autocomplete="new-password" spellcheck="false">
+                        </label>
+                        <button class="button" id="cognos-bundle-button" type="button" disabled>Cognos-Paket herunterladen</button>
+                    </div>
+                    <p>Die Befehlsdateien enthalten Platzhalter für beide Passwörter. IBM übergibt das PFX-Passwort als Prozessargument; beachten Sie daher die Hinweise im Paket zur Shell-History und zum Schutz der Prozessliste.</p>
+                </article>
+            </div>
+        </section>
+        <p class="hint">Die Online-Suche verwendet die AIA-Ausstellerangaben des Zertifikats. Nicht erreichbare oder fehlende Zertifikate lassen sich als PEM-, DER- oder PKCS#7-Datei manuell importieren. <a href="https://www.ibm.com/docs/de/planning-analytics/2.0.0?topic=servers-configure-tls-planning-analytics-workspace-local" target="_blank" rel="noopener noreferrer">IBM-Dokumentation öffnen</a>.</p>
+    </main>
+    <script>
+        const message = document.getElementById("message");
+        const results = document.getElementById("results");
+        const importForm = document.getElementById("import-form");
+        const importButton = document.getElementById("import-button");
+        const pemImportForm = document.getElementById("pem-import-form");
+        const pemImportButton = document.getElementById("pem-import-button");
+        let csrfToken = "";
+        let cognosReady = false;
+
+        function showMessage(text, kind) {
+            message.textContent = text;
+            message.className = "message" + (kind ? " " + kind : "");
+        }
+
+        function renderTrustChain(certificates, complete) {
+            const list = document.getElementById("trust-chain");
+            list.replaceChildren();
+            document.getElementById("trust-summary").textContent = certificates.length
+                + " Zertifikat(e) von Server bis " + (complete ? "Root" : "bekanntem Aussteller");
+
+            certificates.forEach((certificate, index) => {
+                const item = document.createElement("li");
+                item.className = "trust-card";
+
+                const heading = document.createElement("div");
+                heading.className = "trust-card-heading";
+                const role = document.createElement("strong");
+                role.textContent = certificate.role;
+                const position = document.createElement("span");
+                position.className = "trust-position";
+                position.textContent = String(index + 1);
+                heading.append(role, position);
+
+                const fields = document.createElement("div");
+                fields.className = "trust-fields";
+                function addField(label, value, wide) {
+                    const field = document.createElement("div");
+                    field.className = "trust-field" + (wide ? " wide" : "");
+                    const title = document.createElement("span");
+                    title.className = "trust-label";
+                    title.textContent = label;
+                    const content = document.createElement("span");
+                    content.className = "trust-value";
+                    content.textContent = value;
+                    field.append(title, content);
+                    fields.append(field);
+                }
+
+                addField("Subject", certificate.subject, true);
+                addField("Aussteller", certificate.issuer, true);
+                addField("Seriennummer", certificate.serialNumber, false);
+                addField("Gültig von", certificate.validFrom + " UTC", false);
+                addField("Gültig bis", certificate.validUntil + " UTC", false);
+                addField("Aktuelle Gültigkeit", certificate.currentlyValid ? "Derzeit gültig" : "Derzeit nicht gültig", false);
+
+                const checkField = document.createElement("div");
+                checkField.className = "trust-field";
+                const checkLabel = document.createElement("span");
+                checkLabel.className = "trust-label";
+                checkLabel.textContent = "Kettenprüfung";
+                const check = document.createElement("span");
+                check.className = "trust-check" + (certificate.signatureVerified || certificate.selfSigned
+                    ? "" : " is-pending");
+                check.textContent = certificate.selfSigned
+                    ? "Selbstsignierte Root-Signatur geprüft"
+                    : certificate.signatureVerified
+                        ? "Signatur vom nächsten Zertifikat geprüft"
+                        : "Ausstellerzertifikat fehlt";
+                checkField.append(checkLabel, check);
+                fields.append(checkField);
+
+                item.append(heading, fields);
+                list.append(item);
+            });
+        }
+
+        async function refreshStatus() {
+            const response = await fetch("api/status", { cache: "no-store" });
+            if (!response.ok) throw new Error("Sitzungsstatus konnte nicht geladen werden.");
+            const status = await response.json();
+            csrfToken = status.csrfToken;
+            results.hidden = !status.loaded;
+            const inspectionOnly = status.loaded && status.inspectionOnly;
+            document.getElementById("session-label").textContent = !status.loaded
+                ? "Bereit" : inspectionOnly ? "PEM geprüft" : "PFX importiert";
+            document.getElementById("results-title").textContent = inspectionOnly ? "PEM-Prüfergebnis" : "Export bereit";
+            document.getElementById("result-description").textContent = inspectionOnly
+                ? "Prüfung der Schlüssel-Zertifikat-Zuordnung, Zertifikatskette und Zertifikatsgültigkeit."
+                : "Der PAW-Export folgt der IBM-Reihenfolge: privater Schlüssel, Serverzertifikat, Zwischen- und Stammzertifikate.";
+            document.getElementById("exports").hidden = inspectionOnly;
+            document.getElementById("chain-actions").hidden = inspectionOnly;
+            const validationSummary = document.getElementById("validation-summary");
+            validationSummary.hidden = !inspectionOnly;
+            if (inspectionOnly) {
+                const checks = [
+                    status.privateKeyMatches ? "Privater Schlüssel passt zum Serverzertifikat." : "Privater Schlüssel passt NICHT zum Serverzertifikat.",
+                    status.allCertificatesUsed ? "Alle Zertifikate gehören zur angezeigten Kette." : "Mindestens ein Zertifikat gehört nicht zur Serverkette.",
+                    status.certificatesCurrentlyValid ? "Alle Zertifikate sind aktuell gültig." : "Mindestens ein Zertifikat ist abgelaufen oder noch nicht gültig.",
+                    status.chainComplete ? "Die Signaturkette reicht bis zum selbstsignierten Root." : "Die Signaturkette ist nicht bis zu einem selbstsignierten Root vollständig."
+                ];
+                validationSummary.textContent = checks.join(" ");
+                const valid = status.privateKeyMatches && status.allCertificatesUsed
+                    && status.certificatesCurrentlyValid && status.chainComplete;
+                validationSummary.className = "validation-summary " + (valid ? "is-valid" : "is-invalid");
+            }
+            cognosReady = status.loaded && !inspectionOnly && status.cognosReady;
+            document.getElementById("cognos-bundle-button").disabled = !cognosReady;
+            if (status.loaded) {
+                document.getElementById("subject").textContent = status.subject;
+                document.getElementById("valid-until").textContent = status.validUntil;
+                renderTrustChain(status.chain, status.chainComplete);
+                document.getElementById("chain-description").textContent = status.chainCount + " Zertifikat(e) in der Kette";
+                const chainStatus = document.getElementById("chain-status");
+                chainStatus.textContent = status.chainComplete ? "Zertifikatskette vollständig" : "Zertifikatskette unvollständig";
+                chainStatus.classList.toggle("incomplete", !status.chainComplete);
+                document.getElementById("chain-hint").textContent = status.chainCount
+                    + " Zwischen-/Stammzertifikat(e) vorhanden. "
+                    + (inspectionOnly
+                        ? (status.chainComplete ? "Die Signaturen bilden eine vollständige Kette." : "Ein oder mehrere Ausstellerzertifikate fehlen.")
+                        : (status.chainComplete ? "Der PAW-Export ist bereit." : "Ergänzen Sie fehlende Aussteller online oder per Datei."));
+                document.querySelector('[data-type="chain"]').disabled = status.chainCount === 0;
+                document.querySelector('[data-type="paw"]').disabled = !status.chainComplete;
+                document.getElementById("online-chain-button").disabled = status.chainComplete;
+            }
+        }
+
+        async function updateChain(endpoint, formData) {
+            const response = await fetch("api/" + endpoint, {
+                method: "POST",
+                headers: { "X-CSRF-Token": csrfToken },
+                body: formData || undefined,
+                cache: "no-store"
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || "Zertifikatskette konnte nicht ergänzt werden.");
+            await refreshStatus();
+            showMessage(result.message, result.chainComplete ? "success" : "");
+        }
+
+        document.getElementById("online-chain-button").addEventListener("click", async event => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            showMessage("AIA-Ausstellerzertifikate werden gesucht …", "");
+            try {
+                await updateChain("complete-chain");
+            } catch (error) {
+                showMessage(error.message || "Online-Ergänzung fehlgeschlagen.", "error");
+            } finally {
+                button.disabled = document.getElementById("chain-status").textContent === "Zertifikatskette vollständig";
+            }
+        });
+
+        const chainFiles = document.getElementById("chain-files");
+        document.getElementById("manual-chain-button").addEventListener("click", () => chainFiles.click());
+        chainFiles.addEventListener("change", async () => {
+            if (!chainFiles.files.length) return;
+            const formData = new FormData();
+            for (const file of chainFiles.files) formData.append("certificates", file);
+            showMessage("Zertifikate werden geprüft …", "");
+            try {
+                await updateChain("import-chain", formData);
+            } catch (error) {
+                showMessage(error.message || "Zertifikatsimport fehlgeschlagen.", "error");
+            } finally {
+                chainFiles.value = "";
+            }
+        });
+
+        document.getElementById("cognos-bundle-button").addEventListener("click", async event => {
+            const button = event.currentTarget;
+            const passwordInput = document.getElementById("cognos-pfx-password");
+            if (!passwordInput.reportValidity()) return;
+
+            button.disabled = true;
+            showMessage("Cognos-Importpaket wird vorbereitet …", "");
+            try {
+                const formData = new FormData();
+                formData.append("pfxPassword", passwordInput.value);
+                passwordInput.value = "";
+                const response = await fetch("api/cognos-bundle", {
+                    method: "POST",
+                    headers: { "X-CSRF-Token": csrfToken },
+                    body: formData,
+                    cache: "no-store"
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || "Cognos-Paket konnte nicht erstellt werden.");
+                }
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "cognos-certificate-preparation.zip";
+                link.click();
+                URL.revokeObjectURL(url);
+                showMessage("Cognos-Importpaket wurde erstellt.", "success");
+            } catch (error) {
+                showMessage(error.message || "Cognos-Paket konnte nicht erstellt werden.", "error");
+            } finally {
+                button.disabled = !cognosReady;
+            }
+        });
+
+        importForm.addEventListener("submit", async event => {
+            event.preventDefault();
+            if (!importForm.reportValidity()) return;
+            importButton.disabled = true;
+            showMessage("PFX-Datei wird geprüft …", "");
+            try {
+                const response = await fetch(importForm.action, {
+                    method: "POST",
+                    headers: { "X-CSRF-Token": csrfToken },
+                    body: new FormData(importForm),
+                    cache: "no-store"
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Import fehlgeschlagen.");
+                document.getElementById("pfx-password").value = "";
+                await refreshStatus();
+                showMessage("PFX erfolgreich importiert. Die Exporte stehen bereit.", "success");
+            } catch (error) {
+                showMessage(error.message || "Import fehlgeschlagen.", "error");
+            } finally {
+                importButton.disabled = false;
+            }
+        });
+
+        pemImportForm.addEventListener("submit", async event => {
+            event.preventDefault();
+            if (!pemImportForm.reportValidity()) return;
+            pemImportButton.disabled = true;
+            showMessage("PEM-Datei wird geprüft …", "");
+            try {
+                const response = await fetch(pemImportForm.action, {
+                    method: "POST",
+                    headers: { "X-CSRF-Token": csrfToken },
+                    body: new FormData(pemImportForm),
+                    cache: "no-store"
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "PEM-Prüfung fehlgeschlagen.");
+                await refreshStatus();
+                showMessage("PEM-Datei eingelesen. Prüfergebnis und Zertifikatskette werden angezeigt.", "success");
+            } catch (error) {
+                showMessage(error.message || "PEM-Prüfung fehlgeschlagen.", "error");
+            } finally {
+                pemImportButton.disabled = false;
+            }
+        });
+
+        document.querySelectorAll(".download-button").forEach(button => {
+            button.addEventListener("click", async () => {
+                button.disabled = true;
+                try {
+                    const response = await fetch("api/download?type=" + encodeURIComponent(button.dataset.type), { cache: "no-store" });
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || "Export fehlgeschlagen.");
+                    }
+                    const blob = await response.blob();
+                    const filename = {
+                        "private-key": "private-key.pem",
+                        "server-certificate": "server-certificate.pem",
+                        "chain": "certificate-chain.pem",
+                        "paw": "pa-workspace.pem"
+                    }[button.dataset.type];
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = filename;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    showMessage(filename + " wurde erstellt.", "success");
+                } catch (error) {
+                    showMessage(error.message || "Export fehlgeschlagen.", "error");
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        });
+
+        document.getElementById("clear-button").addEventListener("click", async () => {
+            try {
+                const response = await fetch("api/clear", { method: "POST", headers: { "X-CSRF-Token": csrfToken }, cache: "no-store" });
+                if (!response.ok) throw new Error("Sitzung konnte nicht geleert werden.");
+                await refreshStatus();
+                showMessage("Importierte Schlüssel und Zertifikate wurden aus der Sitzung entfernt.", "success");
+            } catch (error) {
+                showMessage(error.message || "Sitzung konnte nicht geleert werden.", "error");
+            }
+        });
+
+        refreshStatus().catch(error => showMessage(error.message, "error"));
+    </script>
+</body>
+</html>
